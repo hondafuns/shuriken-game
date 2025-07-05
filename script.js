@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const quizAnswerEl = document.getElementById('quiz-answer');
     const quizSubmitBtn = document.getElementById('quiz-submit');
     const gameContainer = document.getElementById('game-container');
+    const gameInfoBar = document.getElementById('game-info-bar'); // game-info-barをここで取得
     const canvas = document.getElementById('game-canvas');
     const ctx = canvas.getContext('2d');
     const scoreEl = document.getElementById('score');
@@ -13,6 +14,16 @@ document.addEventListener('DOMContentLoaded', () => {
     const bgm = document.getElementById('bgm');
     const hitSound = document.getElementById('hit-sound');
     const quizBGM = document.getElementById('quiz-bgm');
+    const finalScoreOverlay = document.getElementById('final-score-overlay');
+    const finalScoreEl = document.getElementById('final-score');
+    const retryButton = document.getElementById('retry-button');
+
+    // デバッグ用: 全てのDOM要素が正しく取得できているか確認
+    console.log("--- DOM Elements Check (DOMContentLoaded) ---");
+    console.log("quizContainer:", quizContainer);
+    console.log("gameInfoBar:", gameInfoBar);
+    console.log("canvas:", canvas);
+    console.log("-------------------------------------------");
 
     // --- Game Resolution ---
     const logicalWidth = 800;
@@ -26,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalQuestions = 10;
     let score = 0;
     let shurikenCount = 0;
+    let animationFrameId; // Add this variable
 
     const target = { x: logicalWidth / 2, y: 80, radius: 40, dx: 2 };
     const launcher = { x: logicalWidth / 2, y: logicalHeight * 0.8, angle: 0 };
@@ -36,12 +48,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Audio Unlock Logic ---
     function unlockAndLoadAudio() {
         if (audioUnlocked) return;
-        // Attempt to play and pause all audio elements to unlock them
         const audioElements = [bgm, hitSound, quizBGM];
         audioElements.forEach(audio => {
             audio.play().then(() => {
                 audio.pause();
                 audio.currentTime = 0;
+                console.log(audio.id + " unlocked successfully.");
             }).catch(e => console.error("Audio unlock failed for", audio.id, ":", e));
         });
         audioUnlocked = true;
@@ -63,11 +75,11 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         quizAnswerEl.value = '';
         quizAnswerEl.focus();
-        quizBGM.play().catch(e => console.error("Quiz BGM Playback Failed:", e));
+        quizBGM.play().catch(e => console.error("Quiz BGM Playback Failed (generateQuestion):", e));
     }
 
     function handleAnswer() {
-        unlockAndLoadAudio(); // Unlock audio on the first answer attempt
+        unlockAndLoadAudio();
         if (quizAnswerEl.value === '') return;
         const userAnswer = parseInt(quizAnswerEl.value, 10);
         let correctAnswer = (operator === '+') ? num1 + num2 : num1 - num2;
@@ -85,6 +97,13 @@ document.addEventListener('DOMContentLoaded', () => {
     function endQuiz() {
         quizContainer.classList.add('hidden');
         gameContainer.classList.remove('hidden');
+
+        if (gameInfoBar) {
+            gameInfoBar.classList.remove('hidden'); // gameInfoBarを使用
+        } else {
+            console.error("Error: game-info-bar element not found in endQuiz! Check HTML structure.");
+        }
+
         resizeCanvas(); // Call resizeCanvas after gameContainer is visible
         shurikenCount = correctAnswers;
         shurikenCountEl.textContent = shurikenCount;
@@ -99,7 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
-        const size = 120; // Further increased size
+        const size = 120;
         ctx.drawImage(shurikenImage, -size / 2, -size / 2, size, size);
         ctx.restore();
     }
@@ -165,29 +184,70 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function gameLoop() {
-        requestAnimationFrame(gameLoop);
-        ctx.clearRect(0, 0, logicalWidth, logicalHeight);
+        animationFrameId = requestAnimationFrame(gameLoop);
+        ctx.clearRect(0, 0, logicalWidth, logicalHeight); // Clear using logical dimensions
         drawTarget();
         updateTarget();
         drawLauncher();
         drawShurikens();
         updateShurikens();
         checkCollisions();
+
+        // Check for game over
+        if (shurikenCount <= 0 && shurikens.length === 0) {
+            cancelAnimationFrame(animationFrameId); // Stop the game loop
+            bgm.pause();
+            bgm.currentTime = 0;
+            finalScoreEl.textContent = score;
+            finalScoreOverlay.classList.remove('hidden');
+            return; 
+        }
     }
 
     // --- Event Listeners ---
-    quizSubmitBtn.addEventListener('click', handleAnswer);
-    quizAnswerEl.addEventListener('keypress', e => {
-        if (e.key === 'Enter') handleAnswer();
+    quizSubmitBtn.addEventListener('click', () => {
+        console.log("Quiz Submit Button Clicked!");
+        handleAnswer();
     });
-
-    canvas.addEventListener('click', () => {
-        if (shurikenCount > 0) {
-            shurikens.push({ x: launcher.x, y: launcher.y, angle: launcher.angle });
-            shurikenCount--;
-            shurikenCountEl.textContent = shurikenCount;
+    quizAnswerEl.addEventListener('keypress', e => {
+        if (e.key === 'Enter') {
+            console.log("Enter key pressed in Quiz Answer field!");
+            handleAnswer();
         }
     });
+
+    // canvasのクリックリスナーはinit()で追加
+    // リトライボタンのイベントリスナー
+    retryButton.addEventListener('click', () => {
+        console.log("Retry button clicked!");
+        resetGame();
+    });
+
+    // --- Game Reset Logic ---
+    function resetGame() {
+        // Stop any ongoing game loop before resetting
+        if (animationFrameId) {
+            cancelAnimationFrame(animationFrameId);
+        }
+
+        // Reset game state
+        score = 0;
+        shurikenCount = 0;
+        shurikens.length = 0; // Clear shurikens array
+        currentQuestion = 0;
+        correctAnswers = 0;
+
+        // Reset UI
+        scoreEl.textContent = score;
+        shurikenCountEl.textContent = shurikenCount;
+        finalScoreOverlay.classList.add('hidden');
+        gameContainer.classList.add('hidden');
+        gameInfoBar.classList.add('hidden'); // gameInfoBarを使用
+        quizContainer.classList.remove('hidden');
+
+        // Start new quiz
+        generateQuestion();
+    }
 
     // --- Canvas Resizing ---
     function resizeCanvas() {
@@ -209,12 +269,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Ensure shuriken image is loaded before starting quiz/game
         shurikenImage.onload = () => {
+            console.log("Shuriken image loaded.");
             generateQuestion();
         };
         // If image is already loaded (e.g., from cache), call generateQuestion directly
         if (shurikenImage.complete) {
+            console.log("Shuriken image already complete.");
             generateQuestion();
         }
+
+        // canvasのクリックリスナーをここで追加
+        canvas.addEventListener('click', () => {
+            if (shurikenCount > 0) {
+                shurikens.push({ x: launcher.x, y: launcher.y, angle: launcher.angle });
+                shurikenCount--;
+                shurikenCountEl.textContent = shurikenCount;
+            }
+        });
     }
 
     init();
