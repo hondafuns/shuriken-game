@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
     let shurikenCount = 0;
 
-    const target = { x: logicalWidth / 2, y: 80, radius: 30, dx: 5 };
+    const target = { x: logicalWidth / 2, y: 80, radius: 30, dx: 1 };
     const launcher = { x: logicalWidth / 2, y: logicalHeight * 0.8, angle: 0 };
     const shurikens = [];
     const shurikenImage = new Image();
@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
         ctx.save();
         ctx.translate(x, y);
         ctx.rotate(angle);
-        const size = 40;
+        const size = 120; // Further increased size
         ctx.drawImage(shurikenImage, -size / 2, -size / 2, size, size);
         ctx.restore();
     }
