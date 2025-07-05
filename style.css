@@ -27,14 +27,27 @@ body {
 }
 
 h1 {
-    font-size: 3em;
-    color: #333;
+    font-size: 3em; /* Changed to 3em */
+    color: #333; /* Changed to #333 */
     text-shadow: 5px 5px 0px rgba(0,0,0,0.2);
     margin-bottom: 30px;
-    letter-spacing: 5px;
-    animation: bounceIn 1s ease-out;
-    width: 90%;
-    max-width: 350px;
+    letter-spacing: 5px; /* Add some spacing between letters */
+    animation: bounceIn 1s ease-out; /* Simple entrance animation */
+    width: 90%; /* Added */
+    max-width: 350px; /* Added */
+}
+
+#title-shuriken-icon {
+    width: 80px; /* Adjust size as needed */
+    height: auto;
+    margin-bottom: -20px; /* Pull it up slightly to overlap with the title */
+    transform: rotate(45deg); /* Rotate for a dynamic look */
+    animation: spin 2s linear infinite; /* Add a subtle spin animation */
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
 
 @keyframes bounceIn {
@@ -151,6 +164,7 @@ h1 {
     width: 120px;
     border: 4px solid white;
     box-sizing: border-box;
+    display: inline-block; /* Changed to inline-block */
 }
 
 /* Remove absolute positioning from info boxes */

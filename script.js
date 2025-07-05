@@ -27,7 +27,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let score = 0;
     let shurikenCount = 0;
 
-    const target = { x: logicalWidth / 2, y: 80, radius: 30, dx: 1 };
+    const target = { x: logicalWidth / 2, y: 80, radius: 40, dx: 2 };
     const launcher = { x: logicalWidth / 2, y: logicalHeight * 0.8, angle: 0 };
     const shurikens = [];
     const shurikenImage = new Image();
