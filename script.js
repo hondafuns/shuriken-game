@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const bgm = document.getElementById('bgm');
     const hitSound = document.getElementById('hit-sound');
     const quizBGM = document.getElementById('quiz-bgm');
+    const correctSound = document.getElementById('correct-sound');
+    const incorrectSound = document.getElementById('incorrect-sound');
     const finalScoreOverlay = document.getElementById('final-score-overlay');
     const finalScoreEl = document.getElementById('final-score');
     const retryButton = document.getElementById('retry-button');
@@ -48,7 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- Audio Unlock Logic ---
     function unlockAndLoadAudio() {
         if (audioUnlocked) return;
-        const audioElements = [bgm, hitSound, quizBGM];
+        const audioElements = [bgm, hitSound, quizBGM, correctSound, incorrectSound];
         audioElements.forEach(audio => {
             audio.play().then(() => {
                 audio.pause();
@@ -85,6 +87,11 @@ document.addEventListener('DOMContentLoaded', () => {
         let correctAnswer = (operator === '+') ? num1 + num2 : num1 - num2;
         if (userAnswer === correctAnswer) {
             correctAnswers++;
+            correctSound.currentTime = 0;
+            correctSound.play().catch(e => console.error("Correct Sound Playback Failed:", e));
+        } else {
+            incorrectSound.currentTime = 0;
+            incorrectSound.play().catch(e => console.error("Incorrect Sound Playback Failed:", e));
         }
         currentQuestion++;
         if (currentQuestion < totalQuestions) {
